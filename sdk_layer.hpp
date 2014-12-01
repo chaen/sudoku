@@ -1,6 +1,14 @@
 #ifndef SDK_LAYER_HPP
 #define SDK_LAYER_HPP
 
+/*!
+ * \file sdk_layer.hpp
+ * \brief Layer of a sudoku grid
+ * \author Christophe Haen
+ * \version 0.1
+ */
+ 
+
 #define GRID_SIZE 9
 
 #include <vector>
@@ -18,21 +26,92 @@ using namespace std;
 
 vector<int> all_values;
 
+
+/*! \class sdk_layer
+ * \brief Class representing a layer the sudoku grid
+ *
+ *  A sudoku grid is a pile up of sdk_layer, one more layer per hypothesis
+ *  we need to do
+ */
 class sdk_layer{
-//  void readFile(string filename);  
 
 public:
-  sdk_item items[GRID_SIZE][GRID_SIZE];
-  vector<int> getPossibles(int x, int y);  
+  sdk_item items[GRID_SIZE][GRID_SIZE]; /*! grid of items */
+  
+   /*!
+	 *  \brief Get the possible values at a position
+	 *
+	 *  Check the line, column and neighbourhood to check the possible values
+	 *
+	 *  \param x : line position
+	 *  \param y : column position
+	 *  \param list of possible values
+	 */
+  vector<int> getPossibles(int x, int y);
+  
+  /*!
+	 *  \brief Default constructor
+	 *
+	 *  Constructor
+	 *
+	 */
   sdk_layer();
+  
+   /*!
+	 *  \brief Initial constructor
+	 *
+	 *  Read from file.
+	 *  The file has to be a 9 lines 9 columns (space separated)
+	 *  description of the sudoku. 'x' is for unknown
+	 *
+	 *  \param filename : path of the file to read
+	 */
   sdk_layer(string filename);
+  
+  /*!
+	 *  \brief Copy a layer
+	 *
+	 *  Copy the values, reinitialise the possible, and increment the depth
+	 *  of each item.
+	 *  We don't make a copy constructor to do that because the copy constructor
+	 *  is called when pushing back to a vector, and you don't want to do all this
+	 *  when pushing back.
+	 *
+	 *  \param other : original layer
+	 */
   sdk_layer & copy(const sdk_layer & other);
 
+  /*!
+	 *  \brief Go once through the layer and fill what can be filled
+	 *
+	 *  For each item, if it has one value, set it. If multiple, put or update them
+	 *  throw std::logic_error if no solution to a item.
+	 *
+	 *  \returns amount of item changed
+	 */
 	int make_one_pass();
+	
+	/*!
+	 *  \brief Checks if the layer is completed
+	 *
+	 *  \returns boolean
+	*/  
 	bool isComplete();
 	
+	/*!
+	*  \brief pick one item on which to make hypothesis.
+	*
+	*  Choose an item with the minimum possibilities as base for the hypothesis.
+	*
+	*  Throws std::logic_error if no hypothesis possible
+	*
+	*  \returns sdk_hypo with the positions set.
+	*/
 	sdk_hypo propose_hypothesis();
 	
+	/*!
+	* \brief Display in a bit cute way the layer
+	*/
 	void display();
 	
 
@@ -68,19 +147,18 @@ sdk_layer::sdk_layer(string filename){
     myfile.close();
   }
 
-  else cout << "Unable to open file";
-
+  else {
+   throw std::runtime_error("Unable to open file");
+  }
 }
 
 sdk_layer &  sdk_layer::copy(const sdk_layer & original){
-//   cout << "COPY LAYER !! " << endl;
-  //this->items = original.items;
   for (int i = 0; i < GRID_SIZE; i++){
     for (int j = 0; j < GRID_SIZE; j++){
+    // Copy the item, clear the possibles, increase the depth of the item not set yet
       this->items[i][j] = original.items[i][j];
       this->items[i][j].possibles.clear();
       if (!this->items[i][j]){
-//         cout << i << " " << j << " ++ (" << this->items[i][j].depth << "-> " << this->items[i][j].depth + 1 << ")"  << endl;
         this->items[i][j].depth++;
       }
     }
@@ -89,80 +167,68 @@ sdk_layer &  sdk_layer::copy(const sdk_layer & original){
 }
 
 vector<int> sdk_layer::getPossibles(int x, int y){
+  // These vectors contain the values we find in a given line, column, neighbourhood. 
   vector<int> x_vec, y_vec, in_vec;
   for (int i = 0; i < GRID_SIZE; i ++){
-    //cout << "push in x " << this->items[x][i].value << endl;
-    //cout << "push in y " << this->items[i][y].value << endl;
-
     x_vec.push_back(this->items[x][i].value);
     y_vec.push_back(this->items[i][y].value);
   }
+  
+  // Start indexes of line and column of the neighbourhood.
   int start_x = ((int) x / 3) * 3;
   int start_y = ((int) y / 3) * 3;
 
-  //cout << "start_x " << start_x << " start_y " << start_y << endl;
   for (int i = start_x; i < start_x + 3; i ++){
     for (int j = start_y; j < start_y + 3; j ++){
-      //cout << "push in in " << this->items[i][j].value << endl;
       in_vec.push_back(this->items[i][j].value);
     } 
   }
 
+  // Check the possible values w.r.t the line
   std::sort(x_vec.begin(), x_vec.end());
   vector<int> diff_x(GRID_SIZE);
   vector<int>::iterator diff_x_it;
 
-  diff_x_it=set_difference (all_values.begin(), all_values.end(), x_vec.begin(), x_vec.end(), diff_x.begin());
+  diff_x_it=set_difference (all_values.begin(), all_values.end(),
+   												  x_vec.begin(), x_vec.end(), diff_x.begin());
 
 
-//   cout << "Diff with X vector ";
-//   for (int i = 0; i < GRID_SIZE; i++){
-//     cout << diff_x[i] << " ";
-//   }
-//   cout << endl;
 
+  // Check the possible values w.r.t the column
   std::sort(y_vec.begin(), y_vec.end());
   vector<int> diff_y(GRID_SIZE);
   vector<int>::iterator diff_y_it;
 
-  diff_y_it=set_difference (all_values.begin(), all_values.end(), y_vec.begin(), y_vec.end(), diff_y.begin());
-//   cout << "Diff with Y vector ";
-//   for (int i = 0; i < GRID_SIZE; i++){
-//     cout << diff_y[i] << " ";
-//   }
-//   cout << endl;
+  diff_y_it=set_difference (all_values.begin(), all_values.end(),
+  												  y_vec.begin(), y_vec.end(), diff_y.begin());
 
+
+
+  // Check the possible values w.r.t the neighbourhood
   std::sort(in_vec.begin(), in_vec.end());
   vector<int> diff_in(GRID_SIZE);
   vector<int>::iterator diff_in_it;
 
   diff_in_it=set_difference (all_values.begin(), all_values.end(), in_vec.begin(), in_vec.end(), diff_in.begin());
-//   cout << "Diff In vector ";
-//   for (int i = 0; i < GRID_SIZE; i++){
-//     cout << diff_in[i] << " ";
-//   }
-//   cout << endl;
 
+  // Check the possible values w.r.t the line AND the column
   vector<int> int_x_y(GRID_SIZE);
   vector<int>::iterator int_x_y_it;
 
-  int_x_y_it = set_intersection(diff_x.begin(), diff_x.end(), diff_y.begin(), diff_y.end(), int_x_y.begin());
+  int_x_y_it = set_intersection(diff_x.begin(), diff_x.end(),
+  														  diff_y.begin(), diff_y.end(), int_x_y.begin());
   
 
+	
+  // Check the possible values w.r.t the line AND the column AND the neighbourhood
   vector<int> int_in_x_y(GRID_SIZE);
   vector<int>::iterator int_in_x_y_it;
 
   int_in_x_y_it = set_intersection(int_x_y.begin(), int_x_y.end(), diff_in.begin(), diff_in.end(), int_in_x_y.begin());
 
+	// Remove all the zeros in the possible
 	int_in_x_y.erase(std::remove(int_in_x_y.begin(), int_in_x_y.end(), 0),
                int_in_x_y.end());
-  //int_in_x_y.resize(int_in_x_y_it - int_in_x_y.begin());
-
-//   cout << "Possible ";
-//   for (vector<int>::iterator i = int_in_x_y.begin(); i < int_in_x_y.end(); i++ ){
-//     cout << *i << " " ;
-//   }
-//   cout << endl;
 
   return int_in_x_y;
 }
@@ -173,32 +239,24 @@ int sdk_layer::make_one_pass(){
 
   for (int i = 0; i < GRID_SIZE; i++){
     for (int j = 0; j < GRID_SIZE; j++){
+      // If the value is not set yet
       if (!this->items[i][j]){
-//         cout << "unknown at " << i << " " << j << endl;
+        // Check the possibles.
         vector<int> possibles = this->getPossibles(i,j);
         int amountOfPossibles = possibles.size();
-        // There is no solution
+        // There is no solution, throw logic_error
         if ( !amountOfPossibles){
-//         	cout << "No solution !!" << endl;
         	throw std::logic_error( "No Solution" ); 
         } else if ( amountOfPossibles == 1) {
-//           cout << "Only " << possibles[0] << " is possible" << endl;
+          // Only one possibilities ? It is our value !
         	this->items[i][j] = possibles[0];
         	this->items[i][j].possibles.clear();
+        	changes++;
         } else {
-//           cout << "Several options ";
-//           for (vector<int>::iterator it = possibles.begin(); it != possibles.end(); it ++){
-//             cout << *it << " ";
-//           }
-//           cout << endl;
+          // Update the possibles if it has changed since last pass
         	if (this->items[i][j].possibles != possibles){
-//         	  cout << "Update from previous (";
-//         	  for (vector<int>::iterator it = this->items[i][j].possibles.begin(); it != this->items[i][j].possibles.end(); it ++){
-//             cout << *it << " ";
-//             }
-//             cout << ")" << endl;
-        	  changes++;
         	  this->items[i][j].possibles = possibles;	
+        	  changes++;
         	}
         }
       }
@@ -235,9 +293,6 @@ void sdk_layer::display(){
   }
   cout << " ____________________" << endl;
 
-//  cout << "\033[31mbold red//  text\033[0m" << endl;
-//  cout << "\033[32mbold red text\033[0m" << endl;
-//  cout << "\033[1mbold red text\033[0m" << endl;
 }
 
 sdk_hypo sdk_layer::propose_hypothesis(){
