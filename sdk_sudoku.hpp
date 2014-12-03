@@ -68,12 +68,12 @@ int sdk_sudoku::solve(){
   	  	// make hypothesis and new layer
 				sdk_hypo hypo = curLayer.propose_hypothesis();
 				// The choice we make is the last one of the possible (no reason for that :) )
-				int choice = curLayer.items[hypo.x][hypo.y].possibles.back();
+				int choice = curLayer(hypo.x, hypo.y).possibles.back();
 				
 				cout << "I make a new hypo (" << hypo.x << " " << hypo.y << ") : " << choice << endl;
-				cout << "size of possibles " << curLayer.items[hypo.x][hypo.y].possibles.size() << endl;
+				cout << "size of possibles " << curLayer(hypo.x, hypo.y).possibles.size() << endl;
 				// We remove it of the possibles of the item so we don't pick it up again later
-				curLayer.items[hypo.x][hypo.y].possibles.pop_back();
+				curLayer(hypo.x, hypo.y).possibles.pop_back();
 				// We add it the the tried list of the hypotheses
 				hypo.tried.push_back(choice);
 				// and we push the hypothesis on the list
@@ -83,8 +83,8 @@ int sdk_sudoku::solve(){
 				sdk_layer newLayer;
 				newLayer.copy(curLayer);
 				// And set the hypothesis at its place
-				newLayer.items[hypo.x][hypo.y] = choice;
-			  newLayer.items[hypo.x][hypo.y].depth=this->_layers.size()+1;
+				newLayer(hypo.x, hypo.y) = choice;
+			  newLayer(hypo.x, hypo.y).depth=this->_layers.size()+1;
 				this->_layers.push_back(newLayer);  	  
   		}
   	}  catch (std::logic_error & e){
@@ -122,29 +122,29 @@ int sdk_sudoku::solve(){
     		// Take the previous layer
     		sdk_layer & otherLayer = this->_layers.back();
     		// We check if there are still possibilities on the item we chose as a hypothesis
-    	  if (otherLayer.items[hypo.x][hypo.y].possibles.size()){
+    	  if (otherLayer(hypo.x, hypo.y).possibles.size()){
     	  
     	    // We display the other possibilities
     	    cout << "There are still possibilites ";
-    	    for (vector<int>::iterator it = otherLayer.items[hypo.x][hypo.y].possibles.begin();
-    	                  it != otherLayer.items[hypo.x][hypo.y].possibles.end(); it ++ ){
+    	    for (vector<int>::iterator it = otherLayer(hypo.x, hypo.y).possibles.begin();
+    	                  it != otherLayer(hypo.x, hypo.y).possibles.end(); it ++ ){
     		    cout << *it << " ";
     		  }
     		  cout << endl;
     		  
     		  // Next choice 
-				  int choice = otherLayer.items[hypo.x][hypo.y].possibles.back();
+				  int choice = otherLayer(hypo.x, hypo.y).possibles.back();
 				  cout << "I will try with " << choice << endl;
 				  // Remove it from the future possibles
-				  otherLayer.items[hypo.x][hypo.y].possibles.pop_back();
+				  otherLayer(hypo.x, hypo.y).possibles.pop_back();
 				  // Add it to the tried 
 				  this->_hypothesis.back().tried.push_back(choice);
 				  
 				  // Create a new layer based on this hypothesis
 				  sdk_layer newLayer;
 				  newLayer.copy(otherLayer);
-			  	newLayer.items[hypo.x][hypo.y] = choice;
-			  	newLayer.items[hypo.x][hypo.y].depth=this->_layers.size()+1;
+			  	newLayer(hypo.x, hypo.y) = choice;
+			  	newLayer(hypo.x, hypo.y).depth=this->_layers.size()+1;
 			  	this->_layers.push_back(newLayer);
 			  	
 			  	// Okay, stop stepping back  	

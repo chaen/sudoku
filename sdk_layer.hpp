@@ -114,6 +114,10 @@ public:
 	*/
 	void display();
 	
+	/*!
+	*  \brief Operator to access the element with layer(x,y) 
+	*/
+	sdk_item& operator()(const int nCol, const int nRow);
 
 };
 
@@ -323,6 +327,12 @@ sdk_hypo sdk_layer::propose_hypothesis(){
 	cout << ")" << endl;
   return hypo;
 }
+
+
+sdk_item& sdk_layer::operator()(const int nCol, const int nRow){
+	return this->items[nCol][nRow];
+}
+
 
 
 #endif
